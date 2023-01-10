@@ -1,9 +1,10 @@
-﻿using MagicVilla_VillaAPI.Data;
-using MagicVilla_VillaAPI.Logging;
+﻿using AutoMapper;
+using MagicVilla_VillaAPI.Data;
 using MagicVilla_VillaAPI.Models;
 using MagicVilla_VillaAPI.Models.DTO;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace MagicVilla_VillaAPI.Controllers
 {
@@ -12,18 +13,21 @@ namespace MagicVilla_VillaAPI.Controllers
     [ApiController]
     public class VillaAPIController : ControllerBase
     {
-        private readonly ILogging _logger;
+        private readonly ApplicationDbContext _db;
 
-        public VillaAPIController(ILogging logger)
+        public readonly IMapper _mapper;
+
+        public VillaAPIController(ApplicationDbContext db, IMapper mapper)
         {
-            _logger = logger;
+            this._db = db;
+            _mapper = mapper;
         }
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK)]
-        public ActionResult<IEnumerable<VillaDTO>> GetVillas()
+        public async Task<ActionResult<IEnumerable<VillaDTO>>> GetVillas()
         {
-            _logger.Log("Get All Villas","");
-            return Ok(VillaStore.villaList);
+            var villas = await _db.Villas.ToListAsync();
+            return Ok(_mapper.Map<IEnumerable<VillaDTO>>(villas));
 
         }
         [HttpGet("{id:int}", Name = "GetVilla")]
@@ -33,61 +37,73 @@ namespace MagicVilla_VillaAPI.Controllers
         //[ProducesResponseType(200)]
         //[ProducesResponseType(404)]
         //[ProducesResponseType(400)]
-        public ActionResult<VillaDTO> GetVilla(int id)
+        public async Task<ActionResult<VillaDTO>> GetVilla(int id)
         {
             if (id == 0)
             {
-                _logger.Log("Get Villas Error with id :" + id, "error");
                 return BadRequest();
             }
-            var villa = VillaStore.villaList.FirstOrDefault(x => x.Id == id);
+            var villa = await _db.Villas.FirstOrDefaultAsync(x => x.Id == id);
             if (villa == null)
             {
                 return NotFound();
             }
-            return Ok(villa);
+            return Ok(_mapper.Map<VillaDTO>(villa));
 
         }
         [HttpPost]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public ActionResult<VillaDTO> CreateVilla([FromBody] VillaDTO villaDTO)
+        public async Task<ActionResult<VillaDTO>> CreateVilla([FromBody] VillaCreateDTO villaDTO)
         {
             //if (!ModelState.IsValid)
             //{
             //    return BadRequest(ModelState);
             //}
-            if (VillaStore.villaList.FirstOrDefault(u => u.Name.ToLower() == villaDTO.Name.ToLower()) != null)
+            if (await _db.Villas.FirstOrDefaultAsync(u => u.Name.ToLower() == villaDTO.Name.ToLower()) != null)
             {
                 ModelState.AddModelError("CustomError", "Villa Already Exists!");
                 return BadRequest(ModelState);
             }
             if (villaDTO == null)
                 return BadRequest();
-            if (villaDTO.Id > 0)
-                return StatusCode(StatusCodes.Status500InternalServerError);
-            villaDTO.Id = VillaStore.villaList.OrderByDescending(u => u.Id).FirstOrDefault().Id + 1;
-            VillaStore.villaList.Add(villaDTO);
-            return CreatedAtRoute("GetVilla", new { id = villaDTO.Id }, villaDTO);
+
+            Villa model = _mapper.Map<Villa>(villaDTO);
+           /* Villa model = new()
+            {
+
+                Amenity = villaDTO.Amenity,
+                Derails = villaDTO.Derails,
+                ImageUrl = villaDTO.ImageUrl,
+                Name = villaDTO.Name,
+                Occupancy = villaDTO.Occupancy,
+                Rate = villaDTO.Rate,
+                Sqft = villaDTO.Sqft
+            };*/
+            await _db.Villas.AddAsync(model);
+            await _db.SaveChangesAsync();
+            return CreatedAtRoute("GetVilla", new { id = model.Id }, model);
         }
 
         [HttpDelete("{id:int}", Name = "DeleteVilla")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public ActionResult<VillaDTO> DeleteVilla(int id)
+        public async Task<ActionResult<VillaDTO>> DeleteVilla(int id)
         {
             if (id == 0)
             {
                 return BadRequest();
             }
-            var villa = VillaStore.villaList.FirstOrDefault(x => x.Id == id);
+            var villa = await _db.Villas.FirstOrDefaultAsync(x => x.Id == id);
             if (villa == null)
             {
                 return NotFound();
             }
-            VillaStore.villaList.Remove(villa);
+            _db.Villas.Remove(villa);
+            await _db.SaveChangesAsync();
+
             return NoContent();
         }
 
@@ -95,39 +111,69 @@ namespace MagicVilla_VillaAPI.Controllers
         [HttpPut("{id:int}", Name = "UpdateVilla")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public IActionResult UpdateVilla(int id, [FromBody] VillaDTO villaDTO)
+        public async Task<IActionResult> UpdateVilla(int id, [FromBody] VillaUpdateDTO villaDTO)
         {
             if (villaDTO == null || id != villaDTO.Id)
             {
                 return BadRequest();
             }
-            var villa = VillaStore.villaList.FirstOrDefault(x => x.Id == id);
-            villa.Name = villaDTO.Name;
-            villa.Sqft = villaDTO.Sqft;
-            villa.Occupancy = villaDTO.Occupancy;
 
+            Villa model = _mapper.Map<Villa>(villaDTO);
+
+           
+            _db.Villas.Update(model);
+            await _db.SaveChangesAsync();
             return NoContent();
         }
 
         [HttpPatch("{id:int}", Name = "UpdatePartiaVilla")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public IActionResult UpdatePartiaVilla(int id, JsonPatchDocument<VillaDTO> patchVillaDTO)
+        public async Task<IActionResult> UpdatePartiaVilla(int id, JsonPatchDocument<VillaDTO> patchVillaDTO)
         {
-            if (patchVillaDTO == null || id== 0)
+            if (patchVillaDTO == null || id == 0)
             {
                 return BadRequest();
             }
-            var villa = VillaStore.villaList.FirstOrDefault(x => x.Id == id);
+            var villa = await _db.Villas.AsNoTracking().FirstOrDefaultAsync(x => x.Id == id);
+
             if (villa == null)
             {
                 return BadRequest();
             }
-            patchVillaDTO.ApplyTo(villa, ModelState);
+
+            VillaDTO villaDTO = _mapper.Map<VillaDTO>(villa);
+           /* VillaDTO villaDTO = new()
+            {
+                Id = villa.Id,
+                Amenity = villa.Amenity,
+                Derails = villa.Derails,
+                ImageUrl = villa.ImageUrl,
+                Name = villa.Name,
+                Occupancy = villa.Occupancy,
+                Rate = villa.Rate,
+                Sqft = villa.Sqft
+            };*/
+            patchVillaDTO.ApplyTo(villaDTO, ModelState);
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
+            Villa model = _mapper.Map<Villa>(villaDTO);
+            /* Villa model = new()
+             {
+                 Id = villaDTO.Id,
+                 Amenity = villaDTO.Amenity,
+                 Derails = villaDTO.Derails,
+                 ImageUrl = villaDTO.ImageUrl,
+                 Name = villaDTO.Name,
+                 Occupancy = villaDTO.Occupancy,
+                 Rate = villaDTO.Rate,
+                 Sqft = villaDTO.Sqft
+             };*/
+            _db.Villas.Update(model);
+            await _db.SaveChangesAsync();
+
             return NoContent();
 
         }
