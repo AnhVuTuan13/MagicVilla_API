@@ -7,7 +7,9 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+
 using System.Net;
+using System.Text.Json;
 
 namespace MagicVilla_VillaAPI.Controllers.v1
 {
@@ -29,15 +31,33 @@ namespace MagicVilla_VillaAPI.Controllers.v1
             _response = new();
         }
         [HttpGet]
+        [ResponseCache(CacheProfileName = "Default30")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        public async Task<ActionResult<APIResponse>> GetVillas()
+        public async Task<ActionResult<APIResponse>> GetVillas([FromQuery(Name = "filterOccupancy")] int? occuqancy,
+            [FromQuery] string? search, int pageS=0 , int pageN =1)
         {
             try
             {
-                var villas = await _repository.GetAllAsync();
-                _response.Result = _mapper.Map<IEnumerable<VillaDTO>>(villas);
+                IEnumerable<Villa> villaList;
+                if (occuqancy > 0)
+                {
+                    villaList = await _repository.GetAllAsync(u => u.Occupancy == occuqancy, pageSize: pageS, pageNumber: pageN);
+                }
+                else
+                {
+                    villaList = await _repository.GetAllAsync(pageSize: pageS, pageNumber: pageN);
+                }
+                if (!string.IsNullOrEmpty(search))
+                {
+                    villaList = villaList.Where(u => u.Name.ToLower().Contains(search));
+
+                }
+                Pagination pagination = new() { PageNumber = pageN, PageSize = pageS };
+
+                Response.Headers.Add("X-Pagination", JsonSerializer.Serialize(pagination));
+                _response.Result = _mapper.Map<IEnumerable<VillaDTO>>(villaList);
                 _response.StatusCode = HttpStatusCode.OK;
                 return Ok(_response);
             }
@@ -49,6 +69,7 @@ namespace MagicVilla_VillaAPI.Controllers.v1
             return _response;
         }
         [HttpGet("{id:int}", Name = "GetVilla")]
+        [ResponseCache(Location = ResponseCacheLocation.None, NoStore = true)]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -58,7 +79,7 @@ namespace MagicVilla_VillaAPI.Controllers.v1
         //[ProducesResponseType(404)]
         //[ProducesResponseType(400)]
         public async Task<ActionResult<APIResponse>> GetVilla(int id)
-        {
+         {
             try
             {
                 if (id == 0)

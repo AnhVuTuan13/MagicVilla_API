@@ -26,7 +26,7 @@ namespace MagicVilla_VillaAPI.Repository
             await SaveAsync();
         }
         //"Villa , VillaSpecicail
-        public async Task<T> GetAsync(Expression<Func<T, bool>> filter = null, bool tracked = true, string? includeProperties = null)
+        public async Task<T> GetAsync(Expression<Func<T, bool>> filter = null, bool tracked = true, string includeProperties = null)
         {
             IQueryable<T> villa = dbSet;
             if (!tracked)
@@ -41,12 +41,21 @@ namespace MagicVilla_VillaAPI.Repository
             return await villa.FirstOrDefaultAsync();
         }
 
-        public async Task<IEnumerable<T>> GetAllAsync(Expression<Func<T, bool>>? filter = null, string? includeProperties = null)
+        public async Task<IEnumerable<T>> GetAllAsync(Expression<Func<T, bool>> filter = null, bool tracked = true, string includeProperties = null, int pageSize = 0, int pageNumber = 1)
         {
             IQueryable<T> villas = dbSet;
+          
             if (filter != null)
             {
                 villas = villas.Where(filter);
+            }
+            if(pageSize > 0)
+            {
+                if(pageSize > 100)
+                {
+                    pageSize= 100;
+                }
+                villas= villas.Skip(pageSize*(pageNumber-1)).Take(pageSize);
             }
             if (includeProperties != null)
             {
@@ -74,5 +83,6 @@ namespace MagicVilla_VillaAPI.Repository
             _db.Entry(entity).State = EntityState.Modified;
             await SaveAsync();
         }
+ 
     }
 }
