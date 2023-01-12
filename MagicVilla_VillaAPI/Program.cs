@@ -8,6 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Text;
+using Microsoft.AspNetCore.Mvc;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -30,6 +31,17 @@ builder.Services.AddControllers(option =>
 builder.Services.AddScoped<IVillaRepository, VillaRepository>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IVillaNumberRepository, VillaNumberRepository>();
+builder.Services.AddApiVersioning(option=>
+{
+    option.AssumeDefaultVersionWhenUnspecified = true;
+    option.DefaultApiVersion = new ApiVersion(1, 0);
+    option.ReportApiVersions = true;
+});
+builder.Services.AddVersionedApiExplorer(option =>
+{
+    option.GroupNameFormat = "'v'VVV";
+    option.SubstituteApiVersionInUrl = true;
+});
 var key = builder.Configuration.GetValue<string>("ApiSettings:Secret");
 
 
@@ -83,6 +95,41 @@ builder.Services.AddSwaggerGen(option =>
         new List<String>()
         }
     });
+    option.SwaggerDoc("v1", new OpenApiInfo
+    {
+        Version = "v1.0",
+        Title = "Magic Villa",
+        Description = "Api to manage villas",
+        TermsOfService = new Uri("https://example.com/terms"),
+        Contact = new OpenApiContact
+        {
+            Name = "Dotnetmastery",
+            Url = new Uri("https://dotnetmastery.com")
+        },
+        License = new OpenApiLicense
+        {
+            Name = "Exmple License",
+            Url = new Uri("https://example.com/license")
+        }
+    });
+    option.SwaggerDoc("v2", new OpenApiInfo
+    {
+        Version = "v2.0",
+        Title = "Magic Villa",
+        Description = "Api to manage villas",
+        TermsOfService = new Uri("https://example.com/terms"),
+        Contact = new OpenApiContact
+        {
+            Name = "Dotnetmastery",
+            Url = new Uri("https://dotnetmastery.com")
+        },
+        License = new OpenApiLicense
+        {
+            Name = "Exmple License",
+            Url = new Uri("https://example.com/license")
+        }
+    });
+
 });
 var app = builder.Build();
 
@@ -90,7 +137,13 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
-    app.UseSwaggerUI();
+   /* app.UseSwaggerUI()*/;
+    app.UseSwaggerUI(options =>
+    {
+        options.SwaggerEndpoint("/swagger/v1/swagger.json", "Magic_villaV1");
+        options.SwaggerEndpoint("/swagger/v2/swagger.json", "Magic_villaV2");
+    });
+
 }
 
 app.UseHttpsRedirection();

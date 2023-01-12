@@ -5,8 +5,9 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace MagicVilla_VillaAPI.Controllers
 {
-    [Route("api/Users")]
+    [Route("api/v{version:apiVersion}/Users")]
     [ApiController]
+    [ApiVersionNeutral]
     public class UsersController : Controller
     {
         private readonly IUserRepository userRepo;
@@ -24,37 +25,37 @@ namespace MagicVilla_VillaAPI.Controllers
             if (loginResponse.User == null || string.IsNullOrEmpty(loginResponse.Token))
             {
                 response.StatusCode = System.Net.HttpStatusCode.BadRequest;
-                response.IsSuccess= false;
+                response.IsSuccess = false;
                 response.ErrorMessage.Add("username or pasword is incorrect");
                 return BadRequest(response);
             }
             response.StatusCode = System.Net.HttpStatusCode.OK;
-            response.IsSuccess= true;
-            response.Result= loginResponse;
+            response.IsSuccess = true;
+            response.Result = loginResponse;
             return Ok(response);
         }
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterationRequestDTO model)
         {
             bool ifUsernameUnquie = userRepo.IsUnqueUser(model.UserName);
-            if(!ifUsernameUnquie)
+            if (!ifUsernameUnquie)
             {
                 response.StatusCode = System.Net.HttpStatusCode.BadRequest;
-                response.IsSuccess= false;
+                response.IsSuccess = false;
                 response.ErrorMessage.Add("username already exists!");
-                 return BadRequest(response);
+                return BadRequest(response);
 
             }
             var user = await userRepo.Register(model);
-            if(user == null)
+            if (user == null)
             {
                 response.StatusCode = System.Net.HttpStatusCode.BadRequest;
-                response.IsSuccess= false;
+                response.IsSuccess = false;
                 response.ErrorMessage.Add("Username alreadyn exists");
                 return BadRequest(response);
             }
             response.StatusCode = System.Net.HttpStatusCode.OK;
-            response.IsSuccess= true;
+            response.IsSuccess = true;
             return Ok(response);
         }
     }

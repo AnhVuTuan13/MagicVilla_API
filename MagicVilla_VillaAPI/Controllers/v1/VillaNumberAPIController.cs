@@ -9,11 +9,12 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Net;
 
-namespace MagicVilla_VillaAPI.Controllers
+namespace MagicVilla_VillaAPI.Controllers.v1
 {
-    /*  [Route("api/[Controller]")]*/
-    [Route("api/VillaNumber")]
+    [Route("api/v{version:apiVersion}/VillaNumber")]
     [ApiController]
+    [ApiVersion("1.0")]
+
     public class VillaNumberAPIController : ControllerBase
     {
         protected APIResponse _response;
@@ -24,11 +25,21 @@ namespace MagicVilla_VillaAPI.Controllers
         public VillaNumberAPIController(IVillaNumberRepository repository, IMapper mapper, IVillaRepository villaRepository)
         {
             _villaRepository = villaRepository;
-            this._repository = repository;
+            _repository = repository;
             _mapper = mapper;
-            this._response = new();
+            _response = new();
         }
+
+        [HttpGet("GetString")]
+        public IEnumerable<string> Get()
+        {
+            return new string[] { "DotNet1", "No21.1" };
+        }
+
+
+
         [HttpGet]
+        /* [MapToApiVersion("1.0")]*/
         [ProducesResponseType(StatusCodes.Status200OK)]
         public async Task<ActionResult<APIResponse>> GetVillaNumbers()
         {
@@ -46,6 +57,9 @@ namespace MagicVilla_VillaAPI.Controllers
             }
             return _response;
         }
+
+
+
         [HttpGet("{id:int}", Name = "GetVillaNumber")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]

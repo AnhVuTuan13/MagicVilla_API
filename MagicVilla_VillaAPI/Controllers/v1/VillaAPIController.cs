@@ -9,11 +9,12 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Net;
 
-namespace MagicVilla_VillaAPI.Controllers
+namespace MagicVilla_VillaAPI.Controllers.v1
 {
     /*  [Route("api/[Controller]")]*/
-    [Route("api/VillaAPI")]
+    [Route("api/v{version:apiVersion}/VillaAPI")]
     [ApiController]
+    [ApiVersion("1.0")]
     public class VillaAPIController : ControllerBase
     {
         protected APIResponse _response;
@@ -23,9 +24,9 @@ namespace MagicVilla_VillaAPI.Controllers
         public VillaAPIController(IVillaRepository repository, IMapper mapper)
         {
 
-            this._repository = repository;
+            _repository = repository;
             _mapper = mapper;
-            this._response = new();
+            _response = new();
         }
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK)]
@@ -62,7 +63,7 @@ namespace MagicVilla_VillaAPI.Controllers
             {
                 if (id == 0)
                 {
-                    _response.StatusCode=HttpStatusCode.BadRequest;
+                    _response.StatusCode = HttpStatusCode.BadRequest;
                     return BadRequest(_response);
                 }
                 var villa = await _repository.GetAsync(x => x.Id == id);
@@ -95,7 +96,7 @@ namespace MagicVilla_VillaAPI.Controllers
             try
             {
                 var check = await _repository.GetAllAsync(u => u.Name.ToLower() == villaDTO.Name.ToLower());
-                if(check.Count() != 0)
+                if (check.Count() != 0)
                 {
                     ModelState.AddModelError("CustomError", "Villa Already Exists!");
                     return BadRequest(ModelState);
