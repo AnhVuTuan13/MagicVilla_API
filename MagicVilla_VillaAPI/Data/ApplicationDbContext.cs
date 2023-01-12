@@ -17,13 +17,14 @@ namespace MagicVilla_VillaAPI.Data
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
+            
             modelBuilder.Entity<Villa>().HasData(
                 new Villa
                 {
                     Id = 1,
                     Name = "Royal, Villa",
                     Derails = "Fusce 11",
-                    ImageUrl = "https://plus.unsplash.com/premium_photo-1661883964999-c1bcb57a7357?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=828&q=80",
+                    ImageUrl = "https://dotnetmastery.com/bluevillaimages/villa5.jpg",
                     Occupancy = 5,
                     Rate = 200,
                     Sqft = 550,
@@ -34,7 +35,7 @@ namespace MagicVilla_VillaAPI.Data
                     Id = 2,
                     Name = "Royal, Villa 2",
                     Derails = "Fusce 11",
-                    ImageUrl = "https://plus.unsplash.com/premium_photo-1661883964999-c1bcb57a7357?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=828&q=80",
+                    ImageUrl = "https://dotnetmastery.com/bluevillaimages/villa1.jpg",
                     Occupancy = 5,
                     Rate = 200,
                     Sqft = 550,
@@ -46,7 +47,7 @@ namespace MagicVilla_VillaAPI.Data
                     Id = 3,
                     Name = "Royal, Villa 3",
                     Derails = "Fusce 11",
-                    ImageUrl = "https://plus.unsplash.com/premium_photo-1661883964999-c1bcb57a7357?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=828&q=80",
+                    ImageUrl = "https://dotnetmastery.com/bluevillaimages/villa2.jpg",
                     Occupancy = 5,
                     Rate = 200,
                     Sqft = 550,
@@ -58,7 +59,7 @@ namespace MagicVilla_VillaAPI.Data
                     Id = 4,
                     Name = "Royal, Villa 4",
                     Derails = "Fusce 11",
-                    ImageUrl = "https://plus.unsplash.com/premium_photo-1661883964999-c1bcb57a7357?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=828&q=80",
+                    ImageUrl = "https://dotnetmastery.com/bluevillaimages/villa3.jpg",
                     Occupancy = 5,
                     Rate = 200,
                     Sqft = 550,
@@ -70,7 +71,7 @@ namespace MagicVilla_VillaAPI.Data
                     Id = 5,
                     Name = "Royal, Villa 5",
                     Derails = "Fusce 11",
-                    ImageUrl = "https://plus.unsplash.com/premium_photo-1661883964999-c1bcb57a7357?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=828&q=80",
+                    ImageUrl = "https://dotnetmastery.com/bluevillaimages/villa4.jpg",
                     Occupancy = 5,
                     Rate = 200,
                     Sqft = 550,

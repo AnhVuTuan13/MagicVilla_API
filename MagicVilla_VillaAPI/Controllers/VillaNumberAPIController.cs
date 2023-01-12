@@ -2,6 +2,7 @@
 using MagicVilla_VillaAPI.Data;
 using MagicVilla_VillaAPI.Models;
 using MagicVilla_VillaAPI.Models.DTO;
+using MagicVilla_VillaAPI.Repository;
 using MagicVilla_VillaAPI.Repository.IRepository;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
@@ -33,7 +34,7 @@ namespace MagicVilla_VillaAPI.Controllers
         {
             try
             {
-                var villaNumbers = await _repository.GetAllAsync();
+                var villaNumbers = await _repository.GetAllAsync(includeProperties: "Villa");
                 _response.Result = _mapper.Map<IEnumerable<VillaNumberDTO>>(villaNumbers);
                 _response.StatusCode = HttpStatusCode.OK;
                 return Ok(_response);
@@ -58,7 +59,7 @@ namespace MagicVilla_VillaAPI.Controllers
             {
                 if (id == 0)
                 {
-                    _response.StatusCode=HttpStatusCode.BadRequest;
+                    _response.StatusCode = HttpStatusCode.BadRequest;
                     return BadRequest(_response);
                 }
                 var villaNumber = await _repository.GetAsync(x => x.VillaNo == id);
@@ -90,12 +91,12 @@ namespace MagicVilla_VillaAPI.Controllers
                 var checkedEists = await _repository.GetAllAsync(u => u.VillaNo == villaNumberDTO.VillaNo);
                 if (checkedEists.Count() != 0)
                 {
-                    ModelState.AddModelError("CustomError", "Villa Number Already Exists!");
+                    ModelState.AddModelError("ErrorMessage", "Villa Number Already Exists!");
                     return BadRequest(ModelState);
                 }
-                if(await _villaRepository.GetAsync(u => u.Id == villaNumberDTO.VillaID)== null)
+                if (await _villaRepository.GetAsync(u => u.Id == villaNumberDTO.VillaID) == null)
                 {
-                    ModelState.AddModelError("CustomError", "Villa  Already Not  Exists!");
+                    ModelState.AddModelError("ErrorMessage", "Villa  Already Not  Exists!");
                     return BadRequest(ModelState);
                 }
                 if (villaNumberDTO == null)
@@ -110,7 +111,7 @@ namespace MagicVilla_VillaAPI.Controllers
                 return CreatedAtRoute("GetVilla", new { id = villaNumberDTO.VillaNo }, _response);
             }
             catch (Exception ex)
-            {   
+            {
                 _response.IsSuccess = false;
                 _response.ErrorMessage = new List<string> { ex.Message };
             }
@@ -161,10 +162,12 @@ namespace MagicVilla_VillaAPI.Controllers
                 }
                 if (await _villaRepository.GetAsync(u => u.Id == villaNumDTO.VillaID) == null)
                 {
-                    ModelState.AddModelError("CustomError", "Villa  Already Not  Exists!");
+                    ModelState.AddModelError("ErrorMessage", "Villa  Already Not  Exists!");
                     return BadRequest(ModelState);
                 }
+
                 VillaNumber model = _mapper.Map<VillaNumber>(villaNumDTO);
+
 
                 await _repository.UpdateAsync(model);
                 _response.IsSuccess = true;
